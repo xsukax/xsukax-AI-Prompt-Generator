@@ -252,7 +252,7 @@
             abortController = new AbortController();
             
             try {
-                const systemMessage = "Act as an expert prompt engineer and systematically enhance the following prompt by improving clarity, specificity, structure, and effectiveness while maintaining the original intent and ensuring the output is optimized for AI model comprehension and performance:";
+                const systemMessage = "You are a prompt engineering expert, systematically improve the following prompt by enhancing clarity, specificity, and structure, while preserving the original intent and ensuring optimal AI comprehension and performance. Do not add or invent content beyond what is provided, focus solely on refining the user's text:";
                 const fullPrompt = `${systemMessage}\nOriginal Prompt: ${promptText}\nEnhanced Prompt (provide only the improved version):`;
                 
                 const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
