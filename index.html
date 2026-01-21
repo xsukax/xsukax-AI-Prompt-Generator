@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; }
-        :root { --primary-color: #2da44e; --primary-dark: #2c974b; --text-color: #24292f; --border-color: #d0d7de; --bg-color: #ffffff; --card-bg: #f6f8fa; --sidebar-bg: #f6f8fa; --hover-bg: #f3f4f6; --shadow: 0 3px 6px rgba(140, 149, 159, 0.15); --radius: 6px; }
+        :root { --primary-color: #2da44e; --primary-dark: #2c974b; --text-color: #24292f; --border-color: #d0d7de; --bg-color: #ffffff; --card-bg: #f6f8fa; --sidebar-bg: #f6f8fa; --hover-bg: #f3f4f6; --shadow: 0 3px 6px rgba(140, 149, 159, 0.15); --radius: 6px; --fast-color: #0969da; --advanced-color: #8250df; }
         body { background-color: #fafbfc; color: var(--text-color); line-height: 1.5; min-height: 100vh; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
         header { grid-column: 1 / -1; padding: 20px 0; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
@@ -36,11 +36,19 @@
         .input-group label { display: block; margin-bottom: 8px; font-weight: 500; }
         .textarea-control { width: 100%; min-height: 150px; padding: 12px; border-radius: var(--radius); border: 1px solid var(--border-color); font-size: 15px; resize: vertical; transition: border-color 0.2s ease; }
         .textarea-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(45, 164, 78, 0.1); }
-        .btn-primary { background-color: var(--primary-color); color: white; border: none; padding: 12px 24px; border-radius: var(--radius); font-weight: 500; font-size: 16px; cursor: pointer; transition: background-color 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
-        .btn-primary:hover { background-color: var(--primary-dark); }
-        .btn-primary:disabled { background-color: #94d3a2; cursor: not-allowed; }
+        .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-fast, .btn-advanced { border: none; padding: 12px 24px; border-radius: var(--radius); font-weight: 500; font-size: 16px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-fast { background-color: var(--fast-color); color: white; }
+        .btn-fast:hover { background-color: #0860ca; }
+        .btn-fast:disabled { background-color: #80b4ea; cursor: not-allowed; }
+        .btn-advanced { background-color: var(--advanced-color); color: white; }
+        .btn-advanced:hover { background-color: #6e40c9; }
+        .btn-advanced:disabled { background-color: #b8a0e0; cursor: not-allowed; }
         .response-container { margin-top: 8px; position: relative; }
         .response-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .model-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 10px; border-radius: var(--radius); font-weight: 500; }
+        .model-indicator.fast { background-color: #ddf4ff; color: var(--fast-color); }
+        .model-indicator.advanced { background-color: #fbefff; color: var(--advanced-color); }
         .copy-btn { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 6px 12px; font-size: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
         .copy-btn:hover { background-color: var(--hover-bg); }
         .copy-btn.success { background-color: #dafbe1; border-color: #4ac26b; color: #1a7f37; }
@@ -53,10 +61,12 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         .instructions { background-color: #ddf4ff; border: 1px solid #84d8ff; border-radius: var(--radius); padding: 16px; margin-top: 20px; font-size: 14px; }
         .instructions h3 { color: #0969da; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .instructions ul { margin-left: 20px; margin-top: 8px; }
+        .instructions li { margin-bottom: 6px; }
         .error-message { background-color: #ffebe9; border: 1px solid #ff8182; border-radius: var(--radius); padding: 16px; margin-top: 20px; color: #cf222e; display: none; }
         .error-message.show { display: block; }
         footer { grid-column: 1 / -1; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center; color: #57606a; font-size: 14px; }
-        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } header { flex-direction: column; gap: 16px; align-items: flex-start; } .model-list { max-height: 200px; } }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } header { flex-direction: column; gap: 16px; align-items: flex-start; } .model-list { max-height: 200px; } .button-group { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -90,10 +100,21 @@
                     <label for="originalPrompt">Enter your prompt to enhance:</label>
                     <textarea id="originalPrompt" class="textarea-control" placeholder="Example: Write a story about a robot learning to paint..." rows="6"></textarea>
                 </div>
-                <button class="btn-primary" id="enhanceBtn"><i class="fas fa-magic"></i> Enhance Prompt</button>
+                <div class="button-group">
+                    <button class="btn-fast" id="fastBtn">
+                        <i class="fas fa-bolt"></i> Fast Model
+                    </button>
+                    <button class="btn-advanced" id="advancedBtn">
+                        <i class="fas fa-brain"></i> Advanced Model
+                    </button>
+                </div>
                 <div class="instructions">
                     <h3><i class="fas fa-lightbulb"></i> How it works</h3>
-                    <p>Select a model from the sidebar, enter your prompt, and click "Enhance Prompt". The AI will stream the enhanced version in real-time, making it more detailed, specific, and effective.</p>
+                    <ul>
+                        <li><strong>Fast Model:</strong> Generates concise, clear prompts (2-4 sentences) - perfect for quick enhancements</li>
+                        <li><strong>Advanced Model:</strong> Creates detailed, professional prompts with comprehensive structure and requirements</li>
+                        <li>Select a model from the sidebar, enter your prompt, and choose your enhancement style</li>
+                    </ul>
                 </div>
                 <div class="error-message" id="errorMessage">
                     <strong><i class="fas fa-exclamation-triangle"></i> Error:</strong> 
@@ -103,7 +124,13 @@
 
             <section class="card">
                 <div class="response-header">
-                    <h2><i class="fas fa-star card-icon"></i> Enhanced Prompt</h2>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <h2><i class="fas fa-star card-icon"></i> Enhanced Prompt</h2>
+                        <span class="model-indicator" id="modelIndicator" style="display: none;">
+                            <i class="fas fa-circle"></i>
+                            <span id="modelType"></span>
+                        </span>
+                    </div>
                     <button class="copy-btn" id="copyBtn"><i class="far fa-copy"></i> Copy</button>
                 </div>
                 <div class="streaming-indicator" id="streamingIndicator">
@@ -129,7 +156,8 @@
         const modelList = document.getElementById('modelList');
         const refreshModelsBtn = document.getElementById('refreshModels');
         const originalPrompt = document.getElementById('originalPrompt');
-        const enhanceBtn = document.getElementById('enhanceBtn');
+        const fastBtn = document.getElementById('fastBtn');
+        const advancedBtn = document.getElementById('advancedBtn');
         const enhancedPrompt = document.getElementById('enhancedPrompt');
         const copyBtn = document.getElementById('copyBtn');
         const streamingIndicator = document.getElementById('streamingIndicator');
@@ -137,6 +165,8 @@
         const errorText = document.getElementById('errorText');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
+        const modelIndicator = document.getElementById('modelIndicator');
+        const modelType = document.getElementById('modelType');
         
         let models = [];
         let selectedModel = null;
@@ -147,7 +177,8 @@
             checkOllamaConnection();
             loadModels();
             refreshModelsBtn.addEventListener('click', loadModels);
-            enhanceBtn.addEventListener('click', enhancePrompt);
+            fastBtn.addEventListener('click', () => enhancePrompt('fast'));
+            advancedBtn.addEventListener('click', () => enhancePrompt('advanced'));
             copyBtn.addEventListener('click', copyEnhancedPrompt);
             originalPrompt.value = "Write a story about a robot learning to paint";
         });
@@ -230,7 +261,51 @@
             return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
         }
         
-        async function enhancePrompt() {
+        function getFastModelSystemPrompt(originalText) {
+            return `You are a prompt engineering expert. Transform the following casual prompt into a concise, clear, and structured version that maintains the original intent while being more specific and professional.
+
+Rules:
+- Keep it concise (2-4 sentences maximum)
+- Assign a clear role or expertise area at the beginning
+- Make requirements specific and actionable
+- Preserve the original request's core intent exactly
+- Use professional language while staying accessible
+- Do not add bullet points, numbered lists, or extensive formatting
+- Focus on clarity and directness
+
+Original Prompt: ${originalText}
+
+Enhanced Prompt (provide only the improved version):`;
+        }
+        
+        function getAdvancedModelSystemPrompt(originalText) {
+            return `You are an expert prompt engineer specializing in creating comprehensive, professional prompts that maximize AI model performance and output quality.
+
+Transform the following casual prompt into a highly detailed, professional prompt following this exact structure:
+
+1. Begin with role assignment: "You are an experienced [profession/expert] with [specific expertise]..."
+2. State the request clearly with context
+3. Use "Please provide/address the following:" or similar transition
+4. List detailed requirements using bullet points or sections with:
+   - Specific deliverables
+   - Quality criteria
+   - Contextual considerations
+   - Optional variations or considerations
+5. End with: "Leverage your [expertise] to [deliver desired outcome]"
+
+Requirements:
+- Make it detailed and professional (8-15 sentences with structure)
+- Use bullet points for requirements sections
+- Emphasize expertise and comprehensive analysis
+- Include specific guidance on approach, deliverables, and quality
+- Preserve the original request's intent while significantly expanding clarity and professionalism
+
+Original Prompt: ${originalText}
+
+Enhanced Prompt (provide only the improved version with professional structure):`;
+        }
+        
+        async function enhancePrompt(mode) {
             const promptText = originalPrompt.value.trim();
             if (!promptText) {
                 showError('Please enter a prompt to enhance.');
@@ -243,26 +318,43 @@
             if (isGenerating) return;
             
             isGenerating = true;
-            enhanceBtn.disabled = true;
-            enhanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enhancing...';
+            fastBtn.disabled = true;
+            advancedBtn.disabled = true;
+            
+            if (mode === 'fast') {
+                fastBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            } else {
+                advancedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            }
+            
             streamingIndicator.classList.add('active');
             enhancedPrompt.value = '';
             hideError();
             
+            // Show model indicator
+            modelIndicator.style.display = 'inline-flex';
+            modelIndicator.className = `model-indicator ${mode}`;
+            modelType.textContent = mode === 'fast' ? 'Fast Model' : 'Advanced Model';
+            
             abortController = new AbortController();
             
             try {
-                const systemMessage = "You are a prompt engineering expert, systematically improve the following prompt by enhancing clarity, specificity, and structure, while preserving the original intent and ensuring optimal AI comprehension and performance. Do not add or invent content beyond what is provided, focus solely on refining the user's text:";
-                const fullPrompt = `${systemMessage}\nOriginal Prompt: ${promptText}\nEnhanced Prompt (provide only the improved version):`;
+                const systemPrompt = mode === 'fast' 
+                    ? getFastModelSystemPrompt(promptText)
+                    : getAdvancedModelSystemPrompt(promptText);
                 
                 const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         model: selectedModel,
-                        prompt: fullPrompt,
+                        prompt: systemPrompt,
                         stream: true,
-                        options: { temperature: 0.7, top_p: 0.9 }
+                        options: { 
+                            temperature: mode === 'fast' ? 0.6 : 0.7,
+                            top_p: 0.9,
+                            top_k: 40
+                        }
                     }),
                     signal: abortController.signal
                 });
@@ -308,8 +400,10 @@
                 }
             } finally {
                 isGenerating = false;
-                enhanceBtn.disabled = false;
-                enhanceBtn.innerHTML = '<i class="fas fa-magic"></i> Enhance Prompt';
+                fastBtn.disabled = false;
+                advancedBtn.disabled = false;
+                fastBtn.innerHTML = '<i class="fas fa-bolt"></i> Fast Model';
+                advancedBtn.innerHTML = '<i class="fas fa-brain"></i> Advanced Model';
                 streamingIndicator.classList.remove('active');
                 abortController = null;
             }
